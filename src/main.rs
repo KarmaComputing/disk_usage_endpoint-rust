@@ -1,7 +1,9 @@
-use actix_web::{web, App, HttpServer, Responder, HttpResponse};
-use serde_json::json;  // Importing the `json!` macro
-use sys_info;
+use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use log::{error, info};
+use serde_json::json; // Importing the `json!` macro
 use std::env;
+use env_logger;
+use sys_info; // Importing log macros
 
 async fn disk_space() -> impl Responder {
     match sys_info::disk_info() {
@@ -12,6 +14,10 @@ async fn disk_space() -> impl Responder {
 
             // Calculate percentage used
             let disk_percentage_used = ((used as f64 / total as f64) * 100.0).round() as i32;
+            info!(
+                "Disk space calculated: total = {}, used = {}, free = {}, used percentage = {}%",
+                total, used, free, disk_percentage_used
+            );
 
             HttpResponse::Ok()
                 .append_header(("Access-Control-Allow-Origin", "*"))
@@ -22,16 +28,22 @@ async fn disk_space() -> impl Responder {
                     "use": format!("{}%", disk_percentage_used),
                 }))
         }
-        Err(_) => HttpResponse::InternalServerError().body("Failed to get disk space information"),
+        Err(e) => {
+            error!("Failed to retrieve disk space information: {}", e);
+            HttpResponse::InternalServerError().body("Failed to get disk space information")
+        }
     }
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    // Initalise the logger
+    env_logger::init();
+
     // Retrieve the port from command line argument or environment variable
-    let port = env::args()
-        .nth(1)
-        .unwrap_or_else(|| env::var("DISK_USAGE_ENDPOINT_PORT").unwrap_or_else(|_| "5000".to_string()));
+    let port = env::args().nth(1).unwrap_or_else(|| {
+        env::var("DISK_USAGE_ENDPOINT_PORT").unwrap_or_else(|_| "5000".to_string())
+    });
 
     HttpServer::new(|| {
         App::new()
@@ -42,4 +54,3 @@ async fn main() -> std::io::Result<()> {
     .run()
     .await
 }
-
