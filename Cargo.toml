@@ -1,0 +1,11 @@
+[package]
+name = "disk_usage_endpoint"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "4.9.0"
+serde = "1.0.217"
+serde_json = "1.0.138"
+sys-info = "0.9.1"
+tokio = "1.43.0"
