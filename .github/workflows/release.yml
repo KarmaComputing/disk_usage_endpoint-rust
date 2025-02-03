@@ -42,4 +42,3 @@ jobs:
           executable-name: disk_usage_endpoint
           target: ${{ matrix.platform.target }}
           archive-name: disk_usage_endpoint
-        if: matrix.toolchain == 'stable'
